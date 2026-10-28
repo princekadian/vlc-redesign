@@ -27,6 +27,7 @@ jobs:
         run: |
           IMAGE=$(grep -oP 'VLC_WIN64_IMAGE: \K\S+' extras/ci/gitlab-ci.yml)
           echo "Using $IMAGE"
+          set -o pipefail
           docker run --rm -u root -v "$GITHUB_WORKSPACE:/build" -w /build "$IMAGE" bash -c '
             set -ex
             git config --global --add safe.directory /build
@@ -41,7 +42,19 @@ jobs:
             fi
             extras/package/win32/build.sh -a x86_64 -i n $FLAGS
             chmod -R a+rX win64
-          '
+          ' 2>&1 | tee build.log
+
+      # Logs need a GitHub login, the run summary does not: surface the compile errors there
+      - name: Report build errors
+        if: failure()
+        run: |
+          {
+            echo '## Build errors'
+            echo '```'
+            grep -E -B2 -A6 'error:|Error [0-9]+|\*\*\* |undefined reference' build.log | head -n 200 || tail -n 100 build.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          grep -E 'error:' build.log | head -n 10 | while read -r line; do echo "::error::$line"; done || true
 
       - uses: actions/upload-artifact@v4
         with:
