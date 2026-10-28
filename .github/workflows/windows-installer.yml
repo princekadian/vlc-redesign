@@ -40,7 +40,8 @@ jobs:
               echo "No prebuilt contribs for $SHA, building them (slow)"
               unset VLC_PREBUILT_CONTRIBS_URL
             fi
-            extras/package/win32/build.sh -a x86_64 -i n $FLAGS
+            # -i r: NSIS exe + zip/7z, the nightly mode (-i n) also builds the MSI, whose WiX tools fail in this image
+            extras/package/win32/build.sh -a x86_64 -i r $FLAGS
             chmod -R a+rX win64
           ' 2>&1 | tee build.log
 
