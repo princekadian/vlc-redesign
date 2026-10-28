@@ -36,6 +36,10 @@ FocusScope {
 
     property int identifier: -1
 
+    // item placed between the left and right controls, only when the center zone is empty
+    property Item centerItem: null
+    readonly property bool canHostCenterItem: loaderLeftRight.active
+
     readonly property PlayerControlbarModel model: {
         if (!!MainCtx.controlbarProfileModel.currentModel)
             return MainCtx.controlbarProfileModel.currentModel.getModel(identifier)
@@ -129,11 +133,18 @@ FocusScope {
                     return false
                 }
 
-                Layout.minimumWidth: (containsVisibleItem(leftRepeater) && containsVisibleItem(rightRepeater)) ? playerControlLayout.layoutSpacing
-                                                                                                               : 0
+                Layout.minimumWidth: {
+                    if (playerControlLayout.centerItem)
+                        return playerControlLayout.centerItem.implicitWidth
+                    return (containsVisibleItem(leftRepeater) && containsVisibleItem(rightRepeater)) ? playerControlLayout.layoutSpacing
+                                                                                                    : 0
+                }
 
                 Layout.fillWidth: true
+                Layout.fillHeight: true
                 visible: true
+
+                children: playerControlLayout.centerItem ? [playerControlLayout.centerItem] : []
             }
 
             ControlRepeater {

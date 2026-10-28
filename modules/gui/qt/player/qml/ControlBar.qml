@@ -34,7 +34,8 @@ T.Pane {
     enum TimeTextPosition {
         Hide,
         AboveSlider,
-        LeftRightSlider
+        LeftRightSlider,
+        Inline // time and slider between the left and right controls, on a single row
     }
 
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
@@ -43,11 +44,19 @@ T.Pane {
                              implicitContentHeight + topPadding + bottomPadding)
 
     topInset: sliderY
+    topPadding: inlineSlider ? VLCStyle.controlBar_verticalPadding : 0
 
-    bottomPadding: VLCStyle.margin_xsmall
+    bottomPadding: inlineSlider ? VLCStyle.controlBar_verticalPadding : VLCStyle.margin_xsmall
 
-    readonly property real sliderY: mapFromItem(contentItem, 0, contentItem.sliderY).y
+    // top of the bar in Inline mode, popups (tracks menu, playlist) are anchored above it
+    readonly property real sliderY: inlineSlider ? 0 : mapFromItem(contentItem, 0, contentItem.sliderY).y
     property int textPosition: ControlBar.TimeTextPosition.AboveSlider
+    // Inline needs an empty center zone, fall back to LeftRightSlider otherwise
+    readonly property int _textPosition: (textPosition === ControlBar.TimeTextPosition.Inline
+                                          && !(contentItem?.playerControlLayout?.canHostCenterItem ?? false))
+                                         ? ControlBar.TimeTextPosition.LeftRightSlider
+                                         : textPosition
+    readonly property bool inlineSlider: _textPosition === ControlBar.TimeTextPosition.Inline
     property int identifier: -1
     property real sliderHeight: VLCStyle.heightBar_xxsmall
     property real bookmarksHeight: VLCStyle.controlBarBookmarksHeight
@@ -101,8 +110,9 @@ T.Pane {
 
     TextMetrics {
         id: timeTextMetrics
-        font.pixelSize: (textPosition === ControlBar.TimeTextPosition.LeftRightSlider) ? VLCStyle.fontSize_small
-                                                                                       : VLCStyle.fontSize_normal
+        font.pixelSize: root.inlineSlider ? VLCStyle.fontSize_large
+                                          : (root._textPosition === ControlBar.TimeTextPosition.LeftRightSlider) ? VLCStyle.fontSize_small
+                                                                                                                 : VLCStyle.fontSize_normal
         text: {
             // This text metrics is used for both the time and length, as we want them to have the same width.
             // Length might not be reported in some cases, for that reason we should check both and use the bigger one.
@@ -131,13 +141,13 @@ T.Pane {
             T.Label {
                 id: mediaTime
 
-                Layout.preferredWidth: (textPosition === ControlBar.TimeTextPosition.LeftRightSlider) ? timeTextMetrics.width : -1
+                Layout.preferredWidth: (root._textPosition === ControlBar.TimeTextPosition.LeftRightSlider || root.inlineSlider) ? timeTextMetrics.width : -1
 
                 text: {
                     const length = Player.length
                     return Player.time.formatHMS(length.isSubSecond() ? VLCTick.SubSecondFormattedAsMS : 0)
                 }
-                color: theme.fg.primary
+                color: root.inlineSlider ? theme.fg.secondary : theme.fg.primary
                 font: timeTextMetrics.font
                 horizontalAlignment: Text.AlignHCenter
 
@@ -156,7 +166,7 @@ T.Pane {
             T.Label {
                 id: mediaRemainingTime
 
-                Layout.preferredWidth: (textPosition === ControlBar.TimeTextPosition.LeftRightSlider) ? timeTextMetrics.width : -1
+                Layout.preferredWidth: (root._textPosition === ControlBar.TimeTextPosition.LeftRightSlider || root.inlineSlider) ? timeTextMetrics.width : -1
 
                 readonly property bool showRemainingTime: (MainCtx.showRemainingTime && Player.remainingTime.valid())
 
@@ -217,7 +227,8 @@ T.Pane {
             SliderBar {
                 id: trackPositionSlider
 
-                barHeight: root.sliderHeight
+                barHeight: root.inlineSlider ? VLCStyle.seekBar_height : root.sliderHeight
+                trackStyle: root.inlineSlider
 
                 Accessible.role: Accessible.Slider
                 Accessible.name: qsTr("Progress")
@@ -237,11 +248,21 @@ T.Pane {
                     Navigation.defaultKeyAction(event)
                 }
             },
+            RowLayout {
+                id: inlineRow
+
+                anchors.fill: parent
+
+                spacing: VLCStyle.margin_xsmall
+
+                children: root.inlineSlider ? [mediaTime, trackPositionSlider, mediaRemainingTime] : []
+            },
             Loader {
                 id: bookmarksLoader
 
                 parent: root
-                active: MainCtx.mediaLibraryAvailable
+                // shortcut: bookmarks are laid out under the slider row, hidden in Inline mode until they get an inline layout
+                active: MainCtx.mediaLibraryAvailable && !root.inlineSlider
                 source: "qrc:///qt/qml/VLC/MediaLibrary/Bookmarks.qml"
 
                 x: root.leftPadding + trackPositionSlider.x + row2.Layout.leftMargin
@@ -273,7 +294,7 @@ T.Pane {
             visible: children.length > 0
 
             children: {
-                switch (textPosition) {
+                switch (root._textPosition) {
                 case ControlBar.TimeTextPosition.AboveSlider:
                     return [mediaTime, mediaRemainingTime]
                 case ControlBar.TimeTextPosition.Hide:
@@ -288,10 +309,12 @@ T.Pane {
             id: row2
 
             children: {
-                switch (textPosition) {
+                switch (root._textPosition) {
                 case ControlBar.TimeTextPosition.Hide:
                 case ControlBar.TimeTextPosition.AboveSlider:
                     return [trackPositionSlider]
+                case ControlBar.TimeTextPosition.Inline:
+                    return []
                 case ControlBar.TimeTextPosition.LeftRightSlider:
                     return [mediaTime, trackPositionSlider, mediaRemainingTime]
                 default:
@@ -305,7 +328,7 @@ T.Pane {
 
             Layout.fillWidth: true
             Layout.fillHeight: false
-            Layout.leftMargin: (textPosition === ControlBar.TimeTextPosition.LeftRightSlider) ? VLCStyle.margin_xsmall
+            Layout.leftMargin: (root._textPosition === ControlBar.TimeTextPosition.LeftRightSlider) ? VLCStyle.margin_xsmall
                                                                                               : 0
 
             Layout.rightMargin: Layout.leftMargin
@@ -321,7 +344,9 @@ T.Pane {
 
             identifier: root.identifier
 
-            implicitHeight: MainCtx.pinVideoControls ? VLCStyle.controlLayoutHeightPinned
+            centerItem: root.inlineSlider ? inlineRow : null
+
+            implicitHeight: (MainCtx.pinVideoControls || root.inlineSlider) ? VLCStyle.controlLayoutHeightPinned
                                                      : VLCStyle.controlLayoutHeight
 
             visible: !model?.empty ?? false

@@ -148,8 +148,11 @@ QtObject {
     readonly property int defaultWidthPlaylist: MainCtx.dp(300, scale);
     readonly property int closedWidthPlaylist: MainCtx.dp(20, scale);
 
-    readonly property int expandNavigationPaneWidth: MainCtx.dp(160, scale);
-    readonly property int buttonHeightNavigationPane: MainCtx.dp(35, scale);
+    readonly property int expandNavigationPaneWidth: MainCtx.dp(217, scale);
+    // row pitch of the side navigation, the button itself is navigationPaneButton_height
+    readonly property int buttonHeightNavigationPane: MainCtx.dp(46, scale);
+    readonly property int navigationPaneButton_height: MainCtx.dp(32, scale);
+    readonly property int navigationPane_radius: MainCtx.dp(6, scale);
 
     readonly property int widthSearchInput: MainCtx.dp(200, scale);
     readonly property int widthSortBox: MainCtx.dp(150, scale);
@@ -199,11 +202,11 @@ QtObject {
     readonly property int gridCover_music_height: gridCover_music_width
     readonly property int gridCover_music_border: MainCtx.dp(3, scale)
 
-    readonly property int gridCover_video_width: colWidth(2)
+    readonly property int gridCover_video_width: MainCtx.dp(316, scale)
     readonly property int gridCover_video_height: ( gridCover_video_width * 10.0 ) / 16
     readonly property int gridCover_video_border: MainCtx.dp(4, scale)
 
-    readonly property int gridCover_radius: MainCtx.dp(4, scale)
+    readonly property int gridCover_radius: MainCtx.dp(6, scale)
 
     readonly property int expandCover_music_height: MainCtx.dp(171, scale)
     readonly property int expandCover_music_width: MainCtx.dp(171, scale)
@@ -233,13 +236,13 @@ QtObject {
     readonly property int column_spacing: column_margin
 
     // NOTE: For the grid layout, there is an additional spacing, defined by the verticalSpacing of the ExpandGridView
-    readonly property int gridView_spacing: margin_small + margin_xxxsmall
+    readonly property int gridView_spacing: MainCtx.dp(20, scale)
     readonly property int tableView_spacing: gridView_spacing + margin_large
 
     readonly property int layoutTitle_top_padding: margin_large
     readonly property int layoutTitle_bottom_padding: margin_normal + margin_xxxsmall
 
-    readonly property int layout_left_margin: margin_normal
+    readonly property int layout_left_margin: MainCtx.dp(20, scale)
     readonly property int layout_right_margin: layout_left_margin
 
     readonly property int table_cover_border: MainCtx.dp(2, scale)
@@ -322,6 +325,19 @@ QtObject {
     // ControlBar
 
     readonly property int controlBarBookmarksHeight: icon_xsmall * 0.9
+    readonly property int controlBar_verticalPadding: MainCtx.dp(11, scale)
+
+    // Seek bar (inline in the control bar)
+    readonly property int seekBar_height: MainCtx.dp(28, scale)
+    readonly property int seekBar_radius: MainCtx.dp(6, scale)
+    readonly property int seekBarHandle_width: MainCtx.dp(8, scale)
+    readonly property int seekBarHandle_radius: MainCtx.dp(4, scale)
+    readonly property int seekBar_inset: MainCtx.dp(2, scale)
+
+    // Play button
+    readonly property int playButton_width: MainCtx.dp(54, scale)
+    readonly property int playButton_height: MainCtx.dp(28, scale)
+    readonly property int playButton_radius: MainCtx.dp(6, scale)
 
     // Player control layout
     readonly property int controlLayoutHeight: MainCtx.dp(64, scale)

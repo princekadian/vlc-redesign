@@ -152,19 +152,7 @@ T.Control {
 
         hoverEnabled: true
 
-        readonly property bool cursorInside: {
-            if (!containsMouse)
-                return false
-
-            const center = (width / 2)
-            if (Helpers.pointInRadius( center - mouseX,
-                                       center - mouseY,
-                                       center )) {
-                return true
-            } else {
-                return false
-            }
-        }
+        readonly property bool cursorInside: containsMouse
 
         onCursorInsideChanged: {
             if (pressed && !cursorInside) {
@@ -206,6 +194,15 @@ T.Control {
     }
 
     contentItem: T.Label {
+        ColorContext {
+            id: accentTheme
+
+            colorSet: ColorContext.ButtonAccent
+
+            enabled: theme.enabled
+            hovered: root.cursorInside
+        }
+
         text: {
             const state = Player.playingState
 
@@ -217,10 +214,9 @@ T.Control {
                 return VLCIcons.play_filled
         }
 
-        color: cursorInside ? theme.accent
-                            : "black"  //foreground is always black
+        color: accentTheme.fg.primary
 
-        font.pixelSize: Math.round(parent.height / 1.7)
+        font.pixelSize: VLCStyle.icon_normal
 
         font.family: VLCIcons.fontFamily
 
@@ -240,14 +236,14 @@ T.Control {
     }
 
     background: Item {
-        implicitWidth: height
-        implicitHeight: VLCStyle.icon_medium
+        implicitWidth: VLCStyle.playButton_width
+        implicitHeight: VLCStyle.playButton_height
 
         Widgets.AnimatedBackground {
             anchors.fill: parent
             anchors.margins: -border.width * 4
 
-            radius: width / 2
+            radius: VLCStyle.playButton_radius
             border.pixelAligned: false
 
             enabled: theme.initialized
@@ -258,12 +254,10 @@ T.Control {
         Rectangle {
             anchors.fill: parent
 
-            radius: width / 2
+            radius: VLCStyle.playButton_radius
 
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: "#e25b01" }
-                GradientStop { position: 1.0; color: "#f89a06" }
-            }
+            // revealed while the inner rectangle shrinks on press and hold (stop)
+            color: Qt.darker(accentTheme.bg.primary, 1.3)
 
             Widgets.RoundedRectangleShadow {
                 id: hoverShadow
@@ -280,13 +274,12 @@ T.Control {
             Rectangle {
                 id: innerRectangle
 
-                color: "white"
+                color: accentTheme.bg.primary
 
                 anchors.fill: parent
-                anchors.margins: _diminished ? (parent.width / 2)
-                                             : VLCStyle.dp(2, VLCStyle.scale)
+                anchors.margins: _diminished ? (parent.height / 2) : 0
 
-                radius: width / 2
+                radius: VLCStyle.playButton_radius
 
                 property bool _diminished: false
 

@@ -110,28 +110,49 @@ public:
     Q_PROPERTY(bool hasCSDImage READ hasCSDImage NOTIFY hasCSDImageChanged FINAL)
     Q_PROPERTY(CSDMetrics* csdMetrics READ getCSDMetrics NOTIFY CSDMetricsChanged FINAL)
 
-    //standard color definitions used by light/dark themes
-    COLOR_DEFINITION(orange500, "#FF8800");
-    COLOR_DEFINITION(orange800, "#FF610A");
+    //standard color definitions used by light/dark themes, taken from the redesign figma color styles
+    //accents, dark (orange500) and light (orange800), may be overridden by qt-accent-color
+    COLOR_DEFINITION(orange500, "#D37918");
+    COLOR_DEFINITION(orange800, "#E8851A");
 
-    COLOR_DEFINITION(orange400, "#f89a06"); //FIXME name have been chosen randomly by me
-    COLOR_DEFINITION(orange200, "#e29a06"); //FIXME name have been chosen randomly by me
+    COLOR_DEFINITION(darkFg1, "#EAEAEA");
+    COLOR_DEFINITION(darkFgA1, "#969696");
+    COLOR_DEFINITION(darkFgA2, "#8F8F8F");
+    COLOR_DEFINITION(darkFgA3, "#6B6B6B");
+    COLOR_DEFINITION(darkFgA4, "#404040");
+    COLOR_DEFINITION(darkFgB1, "#161616");
+    COLOR_DEFINITION(darkAccentBright, "#FC9729");
+    COLOR_DEFINITION(darkAccentDim, "#AB6314");
+    COLOR_DEFINITION(darkBgAccentBright, "#371F06");
+    COLOR_DEFINITION(darkBgAccentDark, "#1A1611");
+    COLOR_DEFINITION(darkBgA1, "#222222");
+    COLOR_DEFINITION(darkBgA2, "#1F1F1F");
+    COLOR_DEFINITION(darkBgA3, "#1B1B1B");
+    COLOR_DEFINITION(darkBgA4, "#191919");
+    COLOR_DEFINITION(darkBgA5, "#151515");
+    COLOR_DEFINITION(darkBgB1, "#0E0E0E");
+    COLOR_DEFINITION(darkBgB2, "#090909");
+    COLOR_DEFINITION(darkDividerBright, "#373737");
+    COLOR_DEFINITION(darkDividerDim, "#222222");
 
-    COLOR_DEFINITION(darkGrey200, "#1E1E1E");
-    COLOR_DEFINITION(darkGrey300, "#212121");
-    COLOR_DEFINITION(darkGrey400, "#242424");
-    COLOR_DEFINITION(darkGrey500, "#272727");
-    COLOR_DEFINITION(darkGrey600, "#2A2A2A");
-    COLOR_DEFINITION(darkGrey700, "#2D2D2D");
-    COLOR_DEFINITION(darkGrey800, "#303030");
-
-    COLOR_DEFINITION(lightGrey100, "#FAFAFA");
-    COLOR_DEFINITION(lightGrey200, "#F6F6F6");
-    COLOR_DEFINITION(lightGrey300, "#F2F2F2");
-    COLOR_DEFINITION(lightGrey400, "#EDEDED");
-    COLOR_DEFINITION(lightGrey500, "#E9E9E9");
-    COLOR_DEFINITION(lightGrey600, "#E5E5E5");
-    COLOR_DEFINITION(lightGrey700, "#E0E0E0");
+    COLOR_DEFINITION(lightFg1, "#EAEAEA");
+    COLOR_DEFINITION(lightFgA1, "#3C3C3C");
+    COLOR_DEFINITION(lightFgA2, "#2E2E2E");
+    COLOR_DEFINITION(lightFgA3, "#6B6B6B");
+    COLOR_DEFINITION(lightFgB1, "#161616");
+    COLOR_DEFINITION(lightAccentBright, "#FFA13B");
+    COLOR_DEFINITION(lightAccentDim, "#965916");
+    COLOR_DEFINITION(lightBgAccentBright, "#D8BA9A");
+    COLOR_DEFINITION(lightBgAccentDark, "#C6AB89");
+    COLOR_DEFINITION(lightBgA1, "#EDEDED");
+    COLOR_DEFINITION(lightBgA2, "#DDDDDD");
+    COLOR_DEFINITION(lightBgA3, "#D5D5D5");
+    COLOR_DEFINITION(lightBgA4, "#B3B3B3");
+    COLOR_DEFINITION(lightBgA5, "#888888");
+    COLOR_DEFINITION(lightBgB1, "#E7E7E7");
+    COLOR_DEFINITION(lightBgB2, "#DEDEDE");
+    COLOR_DEFINITION(lightDividerBright, "#9B9B9B");
+    COLOR_DEFINITION(lightDividerDim, "#ACACAC");
 
     COLOR_DEFINITION(red500, "#FF0000");
 

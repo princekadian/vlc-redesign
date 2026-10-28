@@ -88,9 +88,33 @@ T.Pane {
         }
     }
 
-    background: Widgets.AcrylicBackground {
-        enabled: root.useAcrylic
-        tintColor: theme.bg.primary
+    // dark outer frame with a rounded inner panel, the content paddings in MainDisplay keep items inside the panel
+    background: Item {
+        // read by MainDisplay to paint the stack view top-left corner
+        readonly property alias color: frameBackground.color
+
+        ColorContext {
+            id: viewTheme
+            colorSet: ColorContext.View
+        }
+
+        Widgets.AcrylicBackground {
+            id: frameBackground
+
+            anchors.fill: parent
+            enabled: root.useAcrylic
+            tintColor: viewTheme.bg.primary
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: VLCStyle.margin_xsmall
+            anchors.leftMargin: root.safeAreaLeftMargin + VLCStyle.margin_xsmall
+            // rightPadding = resize handle + panel margin + inner padding
+            anchors.rightMargin: root.rightPadding - VLCStyle.margin_xsmall
+            radius: VLCStyle.navigationPane_radius
+            color: theme.bg.primary
+        }
     }
 
     contentItem:  Item {
@@ -122,8 +146,8 @@ T.Pane {
 
                 colorContext.colorSet: ColorContext.Window
 
-                fadingEdge.backgroundColor:  (root.background && (root.background.color.a >= 1.0)) ? root.background.color
-                                                                                                   : "transparent"
+                // the delegates sit on the opaque inner panel
+                fadingEdge.backgroundColor: theme.bg.primary
 
                 component DelegateAnimation : NumberAnimation {
                     easing.type: Easing.InOutSine

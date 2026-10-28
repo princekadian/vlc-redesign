@@ -200,6 +200,9 @@ QVLCFrame::QVLCFrame(qt_intf_t *_p_intf) : QWidget( NULL ), p_intf( _p_intf )
 {
     assert(_p_intf);
 
+    // QVLCFrame has no Q_OBJECT, the application style sheet matches this property instead
+    setProperty("vlcFrame", true);
+
     if (isWindow())
     {
         // If window, set the transient parent:

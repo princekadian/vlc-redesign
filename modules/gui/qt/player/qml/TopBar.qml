@@ -353,9 +353,8 @@ FocusScope{
         rightPadding: VLCStyle.margin_small
 
         text: root.title
-        color: theme.fg.primary
-        font.pixelSize: VLCStyle.dp(13, VLCStyle.scale)
-        font.weight: Font.DemiBold
+        color: theme.fg.secondary
+        font.pixelSize: VLCStyle.fontSize_large
         elide: Text.ElideRight
         verticalAlignment: Text.AlignVCenter
 

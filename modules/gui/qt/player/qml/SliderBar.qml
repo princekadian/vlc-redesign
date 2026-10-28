@@ -28,7 +28,10 @@ import VLC.MainInterface
 T.ProgressBar {
     id: control
 
-    readonly property real _hoveredScalingFactor: 1.8
+    // tall rounded groove with an inset progress fill and a bar handle (redesign seek bar)
+    property bool trackStyle: false
+
+    readonly property real _hoveredScalingFactor: trackStyle ? 1.0 : 1.8
     property int barHeight: VLCStyle.dp(5, VLCStyle.scale)
     readonly property real _scaledBarHeight: control.barHeight * _hoveredScalingFactor
     readonly property real _scaledY: (-control.barHeight / 2) * (control._hoveredScalingFactor - 1)
@@ -324,7 +327,7 @@ T.ProgressBar {
             visible: !Player.hasChapters
             color: control.backgroundColor
             anchors.fill: parent
-            radius: implicitHeight
+            radius: control.trackStyle ? VLCStyle.seekBar_radius : implicitHeight
         }
 
         Repeater {
@@ -357,7 +360,8 @@ T.ProgressBar {
                     readonly property bool _hovered: hoverHandler.hovered &&
                                             (hoverHandler.point.position.x > x && hoverHandler.point.position.x < x+width)
 
-                    color: _currentChapter < 0 ? theme.fg.primary : control.backgroundColor
+                    color: _currentChapter < 0 ? (control.trackStyle ? theme.bg.secondary : theme.fg.primary)
+                                               : control.backgroundColor
                     width: sliderRect.width * seekpointsRect.endPosition - x - control._seekPointsDistance
                     x: sliderRect.width * seekpointsRect.startPosition
 
@@ -370,7 +374,7 @@ T.ProgressBar {
 
                         width: sliderRect.width * control.visualPosition - parent.x - control._seekPointsDistance
                         visible: parent._currentChapter === 0
-                        color: theme.fg.primary
+                        color: control.trackStyle ? theme.bg.secondary : theme.fg.primary
 
                         // We use dynamic mutability group because time interpolation
                         // may induce rapid change:
@@ -429,11 +433,16 @@ T.ProgressBar {
 
         Rectangle {
             id: progressRect
-            width: control.visualPosition * parent.width
+
+            readonly property real _inset: control.trackStyle ? VLCStyle.seekBar_inset : 0
+
+            x: _inset
+            y: _inset
+            width: control.visualPosition * (parent.width - 2 * _inset)
             visible: !Player.hasChapters
-            color: theme.fg.primary
-            height: control.barHeight
-            radius: control._seekPointsRadius
+            color: control.trackStyle ? theme.bg.secondary : theme.fg.primary
+            height: control.barHeight - 2 * _inset
+            radius: control.trackStyle ? VLCStyle.seekBarHandle_radius : control._seekPointsRadius
 
             // We use dynamic mutability group because time interpolation
             // may induce rapid change:
@@ -570,12 +579,16 @@ T.ProgressBar {
 
         property int _size: control.barHeight * 3
 
-        x: (control.visualPosition * control.availableWidth) - width / 2
+        readonly property real _inset: VLCStyle.seekBar_inset
+
+        // track style: the handle sits at the end of the progress fill, inside the groove
+        x: control.trackStyle ? Math.max(_inset, _inset + control.visualPosition * (control.availableWidth - 2 * _inset) - width)
+                              : (control.visualPosition * control.availableWidth) - width / 2
         y: (control.barHeight - height) / 2
 
         implicitWidth: sliderHandle._size
         implicitHeight: sliderHandle._size
-        radius: VLCStyle.margin_small
+        radius: control.trackStyle ? VLCStyle.seekBarHandle_radius : VLCStyle.margin_small
         color: theme.fg.primary
 
         // We use dynamic mutability group because time interpolation
@@ -587,6 +600,17 @@ T.ProgressBar {
             when: (sliderHandle.mutabilityGroup !== undefined)
             value: (Player.playingState === Player.PLAYING_STATE_PLAYING) ? Item.DynamicMutabilityGroup
                                                                           : Item.StaticMutabilityGroup
+        }
+
+        // a State (not plain bindings) so leaving the track style restores what the transitions animate
+        states: State {
+            name: "track"
+            PropertyChanges {
+                target: sliderHandle
+                implicitWidth: VLCStyle.seekBarHandle_width
+                implicitHeight: control.barHeight - 2 * sliderHandle._inset
+                visible: true
+            }
         }
 
         transitions: [
@@ -625,7 +649,8 @@ T.ProgressBar {
             }
         ]
 
-        state: (hoverHandler.hovered || control.visualFocus)
+        state: control.trackStyle ? "track"
+             : (hoverHandler.hovered || control.visualFocus)
                ? ((control._currentChapterHovered || (Player.hasChapters && fsm._state === fsm.fsmHeld)) ? "visibleLarge" : "visible")
                : "hidden"
     }

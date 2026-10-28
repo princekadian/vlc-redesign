@@ -55,8 +55,9 @@ T.ItemDelegate {
     property real implicitLeftInset: VLCStyle.margin_xxsmall
     property real implicitRightInset: VLCStyle.margin_xxsmall
 
-    property real implicitTopInset: VLCStyle.margin_xxxsmall
-    property real implicitBottomInset: VLCStyle.margin_xxxsmall
+    // the button is navigationPaneButton_height tall, centered in its buttonHeightNavigationPane row
+    property real implicitTopInset: (VLCStyle.buttonHeightNavigationPane - VLCStyle.navigationPaneButton_height) / 2
+    property real implicitBottomInset: implicitTopInset
 
     // Accessible
 
@@ -158,7 +159,7 @@ T.ItemDelegate {
 
             visible: control.showText
 
-            font.pixelSize: VLCStyle.fontSize_normal
+            font.pixelSize: VLCStyle.fontSize_large
 
             font.weight: control.checked ? Font.DemiBold : Font.Normal
 

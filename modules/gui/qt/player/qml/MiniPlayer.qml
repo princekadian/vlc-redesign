@@ -52,7 +52,7 @@ ControlBar {
     }
 
     textPosition: (MainCtx.pinVideoControls) ? ControlBar.TimeTextPosition.LeftRightSlider
-                                             : ControlBar.TimeTextPosition.Hide
+                                             : ControlBar.TimeTextPosition.Inline
 
     sliderHeight: (MainCtx.pinVideoControls) ? VLCStyle.heightBar_xxsmall
                                              : VLCStyle.dp(3, VLCStyle.scale)

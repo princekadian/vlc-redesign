@@ -43,6 +43,7 @@
 #include "util/qt_dirs.hpp"                     // toNativeSeparators
 
 #include "util/color_scheme_model.hpp"
+#include "style/systempalette.hpp"
 #include "util/model_recovery_agent.hpp"
 
 #include "widgets/native/interface_widgets.hpp"     // bgWidget, videoWidget
@@ -77,6 +78,7 @@
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
 #include <QStyleHints>
+#include <QApplication>
 #endif
 
 #ifdef _WIN32
@@ -129,6 +131,234 @@ bool loadVLCOption<bool>(vlc_object_t *obj, const char *name)
 {
     return var_InheritBool(obj, name);
 }
+
+// Redesign style sheet for the QWidget parts of the interface (menus, dialogs, preferences).
+// Colors come from the same tokens as the QML SystemPalette, %role% placeholders are
+// substituted with the light or dark value.
+QString redesignStyleSheet(bool dark)
+{
+    const SystemPalette p;
+    const QList<std::pair<QString, QColor>> tokens = dark
+        ? QList<std::pair<QString, QColor>> {
+            { "page", p.get_darkBgB1() },
+            { "sunken", p.get_darkBgB2() },
+            { "panel", p.get_darkBgA4() },
+            { "raised", p.get_darkBgA2() },
+            { "selected", p.get_darkBgA1() },
+            { "divider", p.get_darkDividerDim() },
+            { "dividerStrong", p.get_darkDividerBright() },
+            { "text", p.get_darkFg1() },
+            { "textDim", p.get_darkFgA2() },
+            { "disabled", p.get_darkFgA4() },
+            { "accent", p.get_orange500() },
+            { "accentBright", p.get_darkAccentBright() },
+            { "accentSoft", p.get_darkBgAccentBright() },
+            { "onAccent", p.get_darkFgB1() },
+        }
+        : QList<std::pair<QString, QColor>> {
+            { "page", p.get_lightBgB1() },
+            { "sunken", p.get_lightBgB2() },
+            { "panel", p.get_lightBgA1() },
+            { "raised", p.get_lightBgA2() },
+            { "selected", p.get_lightBgA3() },
+            { "divider", p.get_lightDividerDim() },
+            { "dividerStrong", p.get_lightDividerBright() },
+            { "text", p.get_lightFgB1() },
+            { "textDim", p.get_lightFgA3() },
+            { "disabled", p.get_lightBgA5() },
+            { "accent", p.get_orange800() },
+            { "accentBright", p.get_lightAccentBright() },
+            { "accentSoft", p.get_lightBgAccentBright() },
+            { "onAccent", p.get_lightFgB1() },
+        };
+
+    // Widget backgrounds are scoped to dialogs and frames so the native video widget is left alone.
+    // Qt style sheets do not inherit colors, hence the descendant selectors.
+    QString qss = QStringLiteral(R"QSS(
+QDialog, *[vlcFrame="true"] { background-color: %panel%; }
+QDialog QWidget, *[vlcFrame="true"] QWidget { color: %text%; }
+QScrollArea, QScrollArea > QWidget > QWidget, QStackedWidget { background: transparent; border: none; }
+QLabel { background: transparent; }
+*:disabled { color: %disabled%; }
+
+QMenu {
+    background-color: %panel%;
+    color: %textDim%;
+    border: 1px solid %divider%;
+    padding: 4px;
+}
+QMenu::item {
+    /* shortcut: ~38px rows instead of the figma 48px, VLC main menus have 20+ entries; revisit after seeing them */
+    padding: 10px 32px 10px 14px;
+    border-radius: 6px;
+    background: transparent;
+}
+QMenu::item:selected { background-color: %selected%; color: %text%; }
+QMenu::item:disabled { color: %disabled%; }
+QMenu::icon { padding-left: 14px; }
+QMenu::separator { height: 1px; background: %divider%; margin: 4px 8px; }
+
+QToolTip { background-color: %panel%; color: %text%; border: 1px solid %divider%; padding: 4px 8px; }
+
+QPushButton {
+    background-color: %selected%;
+    color: %text%;
+    border: 1px solid %dividerStrong%;
+    border-radius: 6px;
+    padding: 6px 14px;
+    min-height: 20px;
+}
+QPushButton:hover { border-color: %textDim%; }
+QPushButton:pressed { background-color: %sunken%; }
+QPushButton:default { background-color: %accent%; color: %onAccent%; border: none; }
+QPushButton:default:hover { background-color: %accentBright%; }
+QPushButton:disabled { background-color: %raised%; color: %disabled%; border-color: %divider%; }
+
+QToolButton { background: transparent; border: none; border-radius: 4px; padding: 4px; }
+QToolButton:hover { background-color: %selected%; }
+QToolButton:checked { background-color: %selected%; color: %accent%; }
+
+QLineEdit, QSpinBox, QDoubleSpinBox, QTextEdit, QPlainTextEdit, QTimeEdit {
+    background-color: %sunken%;
+    color: %text%;
+    border: 1px solid %divider%;
+    border-radius: 6px;
+    padding: 6px 8px;
+    selection-background-color: %accentSoft%;
+    selection-color: %text%;
+}
+QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QTextEdit:focus, QPlainTextEdit:focus, QTimeEdit:focus {
+    border-color: %accent%;
+}
+
+QComboBox {
+    background-color: %panel%;
+    color: %textDim%;
+    border: 2px solid %sunken%;
+    border-radius: 6px;
+    padding: 6px 14px;
+    min-height: 20px;
+}
+QComboBox:hover, QComboBox:focus { color: %text%; }
+QComboBox::drop-down { border: none; width: 24px; }
+QComboBox QAbstractItemView {
+    background-color: %panel%;
+    color: %textDim%;
+    border: 2px solid %sunken%;
+    padding: 2px;
+    outline: 0;
+    selection-background-color: %raised%;
+    selection-color: %text%;
+}
+
+QCheckBox, QRadioButton { spacing: 8px; background: transparent; }
+QCheckBox::indicator, QRadioButton::indicator {
+    width: 16px;
+    height: 16px;
+    border: 1px solid %dividerStrong%;
+    background-color: %sunken%;
+}
+QCheckBox::indicator { border-radius: 4px; }
+QRadioButton::indicator { border-radius: 8px; }
+QCheckBox::indicator:checked, QRadioButton::indicator:checked { background-color: %accent%; border-color: %accent%; }
+QCheckBox::indicator:hover, QRadioButton::indicator:hover { border-color: %textDim%; }
+
+QGroupBox {
+    background: transparent;
+    border: 1px solid %divider%;
+    border-radius: 6px;
+    margin-top: 18px;
+    padding: 12px;
+}
+QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 4px; color: %textDim%; }
+
+QTabWidget::pane { border: 1px solid %divider%; border-radius: 6px; top: -1px; }
+QTabBar::tab {
+    background: transparent;
+    color: %textDim%;
+    padding: 8px 14px;
+    border-radius: 6px;
+    margin: 2px;
+}
+QTabBar::tab:hover { color: %text%; }
+QTabBar::tab:selected { background-color: %selected%; color: %accent%; }
+
+QAbstractItemView {
+    background-color: %panel%;
+    alternate-background-color: %raised%;
+    color: %text%;
+    border: 1px solid %divider%;
+    border-radius: 6px;
+    outline: 0;
+    selection-background-color: %selected%;
+    selection-color: %accent%;
+}
+QAbstractItemView::item { padding: 4px; }
+QAbstractItemView::item:hover { background-color: %raised%; }
+QAbstractItemView::item:selected { background-color: %selected%; color: %accent%; }
+QHeaderView::section {
+    background-color: %panel%;
+    color: %textDim%;
+    border: none;
+    border-bottom: 1px solid %divider%;
+    padding: 6px;
+}
+
+QScrollBar:vertical { background: transparent; width: 10px; margin: 0; }
+QScrollBar:horizontal { background: transparent; height: 10px; margin: 0; }
+QScrollBar::handle { background-color: %dividerStrong%; border-radius: 3px; margin: 2px; }
+QScrollBar::handle:vertical { min-height: 24px; }
+QScrollBar::handle:horizontal { min-width: 24px; }
+QScrollBar::handle:hover { background-color: %textDim%; }
+QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }
+QScrollBar::add-page, QScrollBar::sub-page { background: none; }
+
+QSlider { background: transparent; }
+QSlider::groove:horizontal { height: 6px; background-color: %sunken%; border-radius: 3px; }
+QSlider::sub-page:horizontal { background-color: %accentSoft%; border-radius: 3px; }
+QSlider::handle:horizontal { background-color: %accent%; width: 8px; margin: -5px 0; border-radius: 3px; }
+QSlider::groove:vertical { width: 6px; background-color: %sunken%; border-radius: 3px; }
+QSlider::add-page:vertical { background-color: %accentSoft%; border-radius: 3px; }
+QSlider::handle:vertical { background-color: %accent%; height: 8px; margin: 0 -5px; border-radius: 3px; }
+
+QProgressBar { background-color: %sunken%; color: %text%; border: none; border-radius: 4px; text-align: center; }
+QProgressBar::chunk { background-color: %accent%; border-radius: 4px; }
+
+QSplitter::handle { background-color: %divider%; }
+QFrame[frameShape="4"], QFrame[frameShape="5"] { color: %divider%; }
+)QSS");
+
+    for (const auto& [role, color] : tokens)
+    {
+        const QString placeholder = QLatin1Char('%') + role + QLatin1Char('%');
+        qss.replace(placeholder, color.name(QColor::HexRgb));
+    }
+
+    assert(!qss.contains(QLatin1Char('%')));
+    return qss;
+}
+
+void applyRedesignStyleSheet(const ColorSchemeModel* colorScheme)
+{
+    bool dark = false;
+    switch (colorScheme->currentScheme())
+    {
+    case ColorSchemeModel::ColorScheme::Night:
+        dark = true;
+        break;
+    case ColorSchemeModel::ColorScheme::Day:
+        dark = false;
+        break;
+    case ColorSchemeModel::ColorScheme::System:
+    default:
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+        dark = (qGuiApp->styleHints()->colorScheme() == Qt::ColorScheme::Dark);
+#endif
+        break;
+    }
+    qApp->setStyleSheet(redesignStyleSheet(dark));
+}
+
 
 }
 
@@ -184,6 +414,17 @@ MainCtx::MainCtx(qt_intf_t *_p_intf)
         }
 
         styleHints->setColorScheme(scheme);
+    });
+#endif
+
+    applyRedesignStyleSheet(m_colorScheme);
+    connect(m_colorScheme, &ColorSchemeModel::currentChanged, this, [colorScheme = m_colorScheme]() {
+        applyRedesignStyleSheet(colorScheme);
+    });
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+    // the "System" scheme follows the OS setting
+    connect(qGuiApp->styleHints(), &QStyleHints::colorSchemeChanged, this, [colorScheme = m_colorScheme]() {
+        applyRedesignStyleSheet(colorScheme);
     });
 #endif
 
